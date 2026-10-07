@@ -1,6 +1,6 @@
 "use client";
 import { memo, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useTransform } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import "@/lib/i18n";
 import type { ContentItem } from "@/types";
@@ -33,6 +33,8 @@ function ContentCard({ item, isFavorite, onToggleFavorite, dragHandle, onMove, r
   const [signInOpen, setSignInOpen] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const readMoreRef = useRef<HTMLAnchorElement>(null);
+  const swipeX = useMotionValue(0);
+  const revealOpacity = useTransform(swipeX, (v) => (Math.abs(v) > 1 ? 1 : 0));
   const publishedAt = new Date(item.publishedAt);
   const validDate = Number.isFinite(publishedAt.getTime());
   const date = validDate
@@ -49,13 +51,15 @@ function ContentCard({ item, isFavorite, onToggleFavorite, dragHandle, onMove, r
   const showSource = item.source && !item.sample && item.source.toLowerCase() !== "sample data";
 
   return (
-    <div className="swipe-card-shell">
-      <div className="swipe-reveal" aria-hidden="true">
-        <div className="swipe-reveal-side swipe-reveal-delete"><TrashIcon /><span>{t("remove")}</span></div>
-        <div className="swipe-reveal-side swipe-reveal-less"><EyeOffIcon /><span>{t("recommendLess")}</span></div>
-      </div>
+    <div className="relative">
+      {swipeEnabled && (
+        <motion.div className="swipe-reveal" aria-hidden="true" style={{ opacity: revealOpacity }}>
+          <div className="swipe-reveal-side swipe-reveal-delete"><TrashIcon /><span>{t("remove")}</span></div>
+          <div className="swipe-reveal-side swipe-reveal-less"><EyeOffIcon /><span>{t("recommendLess")}</span></div>
+        </motion.div>
+      )}
       <motion.article
-        layout
+        style={{ x: swipeX }}
         drag={swipeEnabled ? "x" : false}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.36}

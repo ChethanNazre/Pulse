@@ -107,7 +107,9 @@ export default function Feed() {
   }, [hasMore, status, loadMore, items.length]);
 
   const onFavorite = useCallback((i: ContentItem) => dispatch(toggleFavorite(i)), [dispatch]);
-  const onMove = useCallback((id: string, direction: -1 | 1) => dispatch(moveItem({ id, direction })), [dispatch]);
+    const visibleIdsRef = useRef<string[]>([]);
+  visibleIdsRef.current = items.map((i) => i.id);
+  const onMove = useCallback((id: string, direction: -1 | 1) => dispatch(moveItem({ id, direction, visibleIds: visibleIdsRef.current })), [dispatch]);
   const onDismiss = useCallback((item: ContentItem) => dispatch(dismissContent(item)), [dispatch]);
   const onRecommendLess = useCallback((item: ContentItem) => dispatch(recommendLess(item)), [dispatch]);
 

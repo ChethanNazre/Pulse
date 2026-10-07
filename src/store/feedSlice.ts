@@ -82,15 +82,27 @@ const feedSlice = createSlice({
       state.query = payload.trim();
     },
     /** Persist the order after drag-and-drop. */
-    reorderItems(state, { payload }: PayloadAction<string[]>) {
+        reorderItems(state, { payload }: PayloadAction<string[]>) {
+      // `payload` may be only the visible subset (type filter). Re-slot those items into the
+      // positions they already occupy so hidden items keep their place.
       const byId = new Map(state.items.map((i) => [i.id, i]));
-      const seen = new Set(payload);
-      state.items = [...payload.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : [])), ...state.items.filter((item) => !seen.has(item.id))];
+      const ordered = [...new Set(payload)].flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));
+      const inPayload = new Set(ordered.map((i) => i.id));
+      let next = 0;
+      state.items = state.items.map((item) => (inPayload.has(item.id) ? ordered[next++] : item));
     },
-    moveItem(state, { payload }: PayloadAction<{ id: string; direction: -1 | 1 }>) {
+    moveItem(state, { payload }: PayloadAction<{ id: string; direction: -1 | 1; visibleIds?: string[] }>) {
       const from = state.items.findIndex((i) => i.id === payload.id);
-      const to = from + payload.direction;
-      if (from < 0 || to < 0 || to >= state.items.length) return;
+      if (from < 0) return;
+      // With a type filter active, swap with the neighbour the user can actually see.
+      let to = from + payload.direction;
+      if (payload.visibleIds) {
+        const at = payload.visibleIds.indexOf(payload.id);
+        const neighbour = payload.visibleIds[at + payload.direction];
+        if (at < 0 || neighbour === undefined) return;
+        to = state.items.findIndex((i) => i.id === neighbour);
+      }
+      if (to < 0 || to >= state.items.length) return;
       [state.items[from], state.items[to]] = [state.items[to], state.items[from]];
     },
   },
