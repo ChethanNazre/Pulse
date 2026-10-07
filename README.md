@@ -1,131 +1,751 @@
-# Pulse
+# Pulse --- Personalized Content Dashboard
 
-Pulse is a responsive, personalized content dashboard for news, movie recommendations, and social posts. Users can filter and search a unified feed, reorder cards, save favorites, adjust appearance and categories, create a local profile, receive feed refresh signals, and switch between English and Spanish.
+> A personalized, responsive content dashboard built with React,
+> Next.js, TypeScript, and Redux Toolkit.
 
-## Assignment audit
+**Live Demo:** https://mypulse.vercel.app/
 
-### A. Complete
+------------------------------------------------------------------------
 
-The app implements preference persistence, NewsAPI and TMDB server adapters, unified/trending/favorites views, cards, search and debounce, pagination, drag and keyboard reorder, theme toggle, Framer Motion interactions, Redux async architecture, unit/integration coverage, and local mock sign-in/profile. English/Spanish switching and SSE-driven refreshes are also implemented. Live NewsAPI and TMDB credentials are not present in this checkout, so live items will appear only after you configure those keys.
+## 1. Project Overview
 
-### B. Partially complete
+Pulse is a Personalized Content Dashboard designed to bring multiple
+content sources into one interactive interface.
 
-Live provider credentials must be configured before real NewsAPI or TMDB data can be displayed. The assignment permits mock social content, but the mock feed is disabled by default. SSE signals a refetch instead of receiving content pushed by an upstream provider. English and Spanish cover the app UI, while legal copy and source-provided content keep their original language. Mock auth is deliberately browser-local and cannot authenticate or authorize real users.
+The application combines:
 
-### C. Missing
+-   News content
+-   Movie recommendations
+-   Social posts
+  
+The dashboard will present content such as news, recommendations, and social posts 
+from multiple sources, and it will allow users to interact with and customize their 
+dashboard experience. You will be challenged to use React, Next.js, TypeScript, 
+Redux Toolkit, API Integration, and Testing to create an interactive, user-centric platform.
 
-The core assignment features are represented in the app. Submission artifacts that are not in this workspace remain outstanding: a public GitHub URL, hosted live URL, and demo video. Live provider credentials must be replaced with rotated values before data verification. No external account or hosting changes were made.
+------------------------------------------------------------------------
 
-### D. Weak and worth improving
+## 2. Objective
 
-For a production service, replace mock auth with a real identity provider, connect a permitted social API, push provider events instead of periodic refresh hints, localize the legal pages, and add provider-specific monitoring/rate-limit handling. Review legal policy for the actual hosting operator before launch.
+The main goal is to give users one place where they can discover
+content, search across sources, personalize their feed, save favorites,
+reorder or dismiss content, and adjust their viewing preferences.
 
-| Requirement | Status | Implementation |
-|---|---|---|
-| Personalized categories and local preferences | Complete | Redux preferences with guarded localStorage hydration; six categories and dark mode |
-| News API | Partial until configured | Server-side NewsAPI proxy is implemented; requires `NEWS_API_KEY`, displays a provider error instead of invented content when missing or unavailable |
-| Recommendations API | Partial until configured | TMDB movie discovery and search are implemented; requires `TMDB_API_KEY`, displays a provider error instead of invented content when missing or unavailable |
-| Social API | Connected | Public posts from Mastodon.social tag timelines are mapped into the feed; sample posts remain opt-in |
-| Unified interactive content cards | Complete | Cards show source publication dates, publisher imagery where supplied, concise actions, favorites, reorder, dismiss, and recommendation feedback |
-| Pagination / infinite scroll | Complete | IntersectionObserver and a visible Load more fallback; thunk guards duplicate page requests |
-| Responsive shell and navigation | Complete | Desktop sidebar with a hide/show control, compact bottom mobile navigation, sticky search header |
-| Feed, trending, favorites, search | Complete | Dedicated sections and category-aware source search |
-| Debounced search | Complete | 400 ms debounce before the query enters Redux/API requests |
-| Drag and drop | Complete | Framer Motion reorder with separate keyboard up/down controls |
-| Dark mode | Complete | CSS custom properties, local persistence, system-theme first-paint fallback |
-| Per-card recommendations | Complete | Swipe right to dismiss; swipe left to suppress matching type/category suggestions; Settings can restore items, reset choices, or disable gestures |
-| Motion and loading states | Complete | Framer Motion card/reorder/favorite interactions, skeletons, loading indicator, reduced-motion handling |
-| Redux Toolkit and async logic | Complete | Feature slices, `createAsyncThunk`, request race protection, parallel source requests |
-| Unit and integration coverage | Complete | Jest and React Testing Library cover slices, utilities, cards, sign-in gating, and feed success/empty/error/retry flows |
-| Playwright E2E coverage | Written; execution blocked in this environment | Search, ordering, favorites, settings, trending, pagination, error recovery, profile/language, responsive cards, sign-in gating, and legal pages; the Playwright runner exits with Windows `spawn EPERM` before test collection |
-| Mock authentication/profile | Complete for assignment scope | News article links request a browser-local profile; settings support profile management. No password or server account is used |
-| Real-time feed | Partial by design | SSE sends refresh events every 30 seconds; the client refetches current sources. It is a refresh signal, not a push stream from upstream providers |
-| Internationalization | Partial | `react-i18next` supports English and Spanish for the primary shell/feed/settings controls; long-form legal and some secondary content copy remains English |
-| Performance | Partial | Debounce, lazy-loaded images, paginated API calls, parallel provider requests, and stale-request protection are implemented. Large-feed virtualization and measured production profiling are not |
-| Accessibility audit | Partial | Semantic landmarks, keyboard controls, focus indicators, and accessible sign-in are implemented. A formal WCAG audit and screen-reader test have not been completed |
-| Security | Partial for production use | API credentials stay server-side; URL parameters are bounded/validated; external links use `noopener noreferrer`; the local profile is not an authorization boundary. Keep provider keys private and rotate any key that may have been exposed |
-| Public GitHub repository, live deployment, demo video | Not included | These require account/hosting access and a recorded/submitted URL. The app is prepared for deployment, but no external publishing was performed |
+The project focuses on both the user experience and the frontend
+architecture. It uses reusable React components, centralized state
+management, server-side API handling, responsive layouts, local
+persistence, animations, and automated testing.
 
-## Architecture
+------------------------------------------------------------------------
 
-- **Next.js 14 App Router** renders the application and provides same-origin `/api/news`, `/api/movies`, `/api/social`, and `/api/events` endpoints.
-- **React and TypeScript** implement the views, cards, shell, and interaction components.
-- **Redux Toolkit** owns preferences, authentication profile, feed, trending items, favorites, and per-card feedback. Feed and trending loads use thunks. Source requests run concurrently; individual source failures degrade to a warning when other sources work.
-- **Server API adapters** keep NewsAPI and TMDB secrets on the server. Query values are bounded and categories are allow-listed. Live-provider failures return clear errors rather than substituting fictional items. Social posts are fetched from Mastodon.social's public tag timelines without credentials. Sample content requires the explicit `USE_SAMPLE_DATA=true` opt-in.
-- **Browser persistence** hydrates preferences, favorites, mock profile, and card feedback after mount so defaults cannot overwrite saved state. The profile contains only a display name and email; it is not an identity service.
-- **SSE** at `/api/events` sends periodic refresh events and keep-alive comments. The browser closes the stream when the app shell unmounts.
-- **Internationalization** uses `i18next` and `react-i18next`. English and Spanish are available from Settings; language preference persists locally.
+## 3. Key Features
 
-## Setup
+### 3.1 Unified Content Feed
 
-Requirements: Node.js 20 or newer and npm.
+Pulse combines three main content types into one feed:
 
-```bash
+-   **News** from WebProNews / NewsAPI integration
+-   **Movies** from TMDB
+-   **Social posts** from Mastodon's public tag timelines
+
+Each card keeps the content source visible and provides relevant actions
+such as:
+
+-   Read More
+-   Play Now
+-   View Post
+-   Favorite
+-   Reorder
+-   Remove
+-   Show fewer similar items
+
+------------------------------------------------------------------------
+
+### 3.2 Personalization
+
+Users can choose categories that influence the content experience.
+
+Available categories include:
+
+-   Technology
+-   Sports
+-   Finance
+-   Entertainment
+-   Health
+-   Science
+
+The selected preferences influence the news feed and trending content.
+
+Preferences are persisted locally in the browser so they can be restored
+when the application loads again.
+
+------------------------------------------------------------------------
+
+### 3.3 Search
+
+The search experience works across:
+
+-   News
+-   Movies
+-   Social posts
+
+A short debounce is applied to the search input. Pulse waits
+approximately **400 ms after the user stops typing** before the query is
+sent into the feed request.
+
+This reduces unnecessary requests caused by making a request for every
+individual keystroke.
+
+------------------------------------------------------------------------
+
+### 3.4 Trending
+
+The Trending section provides ranked content organized by source.
+
+It gives users another way to discover content without relying only on
+the personalized feed.
+
+------------------------------------------------------------------------
+
+### 3.5 Favorites
+
+Users can save content using the heart action.
+
+Saved content is collected in the Favorites page and is also persisted
+in browser storage.
+
+------------------------------------------------------------------------
+
+### 3.6 Feed Feedback
+
+Users can provide feedback on individual cards.
+
+Supported interactions include:
+
+-   Dismissing content
+-   Asking for fewer similar suggestions
+-   Restoring feedback
+-   Resetting feedback
+
+Gesture controls can also be enabled or disabled from Settings.
+
+------------------------------------------------------------------------
+
+### 3.7 Reordering
+
+Users can change the order of content using the available reorder
+controls.
+
+The application supports:
+
+-   Drag/reorder interaction
+-   Labeled up/down controls
+-   Keyboard-accessible reordering through the up/down controls
+
+------------------------------------------------------------------------
+
+### 3.8 Responsive Design
+
+The interface adapts to different screen sizes.
+
+### Desktop
+
+The desktop layout includes:
+
+-   Sidebar navigation
+-   Sticky header
+-   Search
+-   Theme control
+-   Date control
+-   Profile controls
+
+### Smaller Screens
+
+On smaller screens:
+
+-   Navigation moves into a compact bottom bar
+-   Content cards reflow
+-   Card actions remain available
+
+------------------------------------------------------------------------
+
+### 3.9 Theme and Language
+
+Users can switch between:
+
+-   Light mode
+-   Dark mode
+
+The application also supports:
+
+-   English
+-   Spanish
+
+These preferences are stored locally.
+
+------------------------------------------------------------------------
+
+### 3.10 Motion and Accessibility
+
+Framer Motion is used for short interface transitions involving:
+
+-   Cards
+-   Favorites
+-   Reordering
+
+The application also includes reduced-motion support.
+
+Keyboard-accessible controls are provided for content reordering.
+
+------------------------------------------------------------------------
+
+## 4. Technology Stack
+
+### Frontend
+
+-   React
+-   Next.js
+-   Next.js App Router
+-   TypeScript
+
+### State Management
+
+-   Redux Toolkit
+-   Redux Toolkit thunks
+
+### External Data
+
+-   NewsAPI / news provider adapter
+-   TMDB
+-   Mastodon public tag timelines
+
+### UI / Interaction
+
+-   Framer Motion
+-   Responsive CSS/layout
+-   Keyboard-accessible controls
+
+### Testing
+
+-   Jest
+-   React Testing Library
+-   Playwright
+
+### Deployment
+
+-   Vercel
+
+------------------------------------------------------------------------
+
+## 5. Application Architecture
+
+The application separates UI, state management, server-side API access,
+and external content providers.
+
+A simplified flow is:
+
+``` text
+User
+  │
+  ▼
+Pulse UI
+  │
+  ├── Dashboard / Feed
+  ├── Search
+  ├── Trending
+  ├── Favorites
+  └── Settings
+        │
+        ▼
+   Redux Toolkit
+        │
+        ├── Preferences
+        ├── Profile
+        ├── Feed
+        ├── Trending
+        ├── Favorites
+        └── Card Feedback
+        │
+        ▼
+ Redux Toolkit Thunks
+        │
+        ▼
+ Next.js Server Routes
+        │
+        ├── News Provider
+        ├── TMDB
+        └── Mastodon
+```
+
+### State Management
+
+Redux stores the main application state, including:
+
+-   User preferences
+-   Local profile information
+-   Feed items
+-   Trending items
+-   Favorites
+-   Individual card feedback
+
+Asynchronous operations are handled through Redux Toolkit thunks.
+
+News and movie requests can run in parallel through server routes.
+Request guards are used to prevent an older response from replacing a
+newer result.
+
+------------------------------------------------------------------------
+
+## 6. API and Data Handling
+
+Pulse uses adapters for external content providers.
+
+### News
+
+News requests are handled through the application's server-side
+integration.
+
+### Movies
+
+Movie recommendations and movie-related content are retrieved through
+TMDB.
+
+### Social Content
+
+Social posts are retrieved from Mastodon's public tag timelines.
+
+### Server-side Credentials
+
+Provider credentials are kept on the server rather than being exposed
+directly in the browser.
+
+This is especially important for services that require API credentials.
+
+### Provider Failure Handling
+
+If an external provider fails, Pulse reports the problem instead of
+generating or displaying invented content.
+
+This keeps the feed dependent on actual provider responses.
+
+------------------------------------------------------------------------
+
+## 7. Persistence
+
+Pulse restores locally stored information after the application mounts.
+
+The browser stores information such as:
+
+-   Selected preferences
+-   Favorites
+-   Local profile details
+-   Card feedback
+-   Theme preference
+-   Language preference
+
+This allows the application to preserve the user's experience between
+sessions on the same browser.
+
+> **Important:** The local profile is for demonstration purposes. It is
+> not a real authentication system or authorization boundary.
+
+------------------------------------------------------------------------
+
+## 8. User Flow
+
+The typical user flow is:
+
+``` text
+Open Pulse
+    │
+    ▼
+View Personalized Feed
+    │
+    ├── Browse News
+    ├── Browse Movies
+    └── Browse Social Posts
+    │
+    ▼
+Search / Discover Content
+    │
+    ├── Search
+    ├── Trending
+    └── Load More
+    │
+    ▼
+Interact With Content
+    │
+    ├── Open Content
+    ├── Favorite
+    ├── Reorder
+    ├── Dismiss
+    └── Request Fewer Similar Items
+    │
+    ▼
+Customize Preferences
+    │
+    ├── Categories
+    ├── Theme
+    ├── Language
+    └── Feed Controls
+    │
+    ▼
+Preferences Persist Locally
+    │
+    ▼
+Return to Personalized Feed
+```
+
+### Example User Journey
+
+1.  The user opens Pulse and sees the personalized feed.
+2.  The user browses news, movies, and social posts.
+3.  The user saves an interesting item using the heart icon.
+4.  The user searches for a topic or title.
+5.  The user checks Trending for additional discovery.
+6.  The user opens Favorites to return to saved content.
+7.  The user opens Settings and selects preferred categories.
+8.  The user changes the theme or language if required.
+9.  The selected preferences and saved content remain available after
+    the application reloads.
+
+------------------------------------------------------------------------
+
+## 9. Project Setup
+
+### Prerequisites
+
+Before running Pulse locally, make sure you have:
+
+-   Node.js installed
+-   npm installed
+-   Access to the required external API credentials
+-   Git installed if cloning the repository
+
+### Clone the Repository
+
+``` bash
+git clone <YOUR_REPOSITORY_URL>
+cd <PROJECT_DIRECTORY>
+```
+
+### Install Dependencies
+
+``` bash
 npm install
+```
+
+### Environment Variables
+
+Create a local environment file based on the environment variables
+expected by the project.
+
+Example:
+
+``` env
+NEWS_API_KEY=your_news_api_key
+TMDB_API_KEY=your_tmdb_api_key
+```
+
+Use the exact variable names expected by the project's server/API
+adapter files.
+
+Do not commit real API keys to GitHub.
+
+### Start the Development Server
+
+``` bash
 npm run dev
 ```
 
-Open `http://localhost:3000`. Add live provider credentials as described below to load news and movie data. The default local configuration does not show invented items.
+Then open:
 
-## Environment variables
+``` text
+http://localhost:3000
+```
 
-Copy `.env.example` to `.env.local`. Add your NewsAPI and TMDB credentials locally. Do not paste keys into source files or chat.
+------------------------------------------------------------------------
 
-| Variable | Purpose |
-|---|---|
-| `NEWS_API_KEY` | NewsAPI key, read only in the `/api/news` route |
-| `TMDB_API_KEY` | TMDB API Read Access Token, read only in `/api/movies` |
-| `USE_SAMPLE_DATA` | Leave `false`; set `true` only for an explicitly labeled local test/demo source. Playwright sets this for its isolated test server |
-| `NEXT_PUBLIC_SITE_URL` | Canonical production URL, including `https://` |
-| `NEXT_PUBLIC_SITE_OPERATOR` | Operator name shown on legal pages |
-| `NEXT_PUBLIC_CONTACT_EMAIL` | Contact address shown on legal pages |
+## 10. Available Scripts
 
-Never add real credentials to source control or expose provider keys through `NEXT_PUBLIC_` variables. Missing keys or unavailable providers produce an actionable error state instead of fake content. The social feed uses Mastodon.social's public API and requires no API key.
+The project README/setup should use the scripts defined in
+`package.json`.
 
-Create a NewsAPI key from [NewsAPI](https://newsapi.org/register) and a TMDB API Read Access Token in your [TMDB account API settings](https://developer.themoviedb.org/docs/authentication-application). Put them in `.env.local`, then restart the server.
+Typical commands used for the project include:
 
-## Authentication and profile
+``` bash
+npm run dev
+```
 
-The Settings page offers mock sign-in and sign-out with a name and email. News article links require this local profile before continuing. The profile is stored in this browser only. There is no password, account backend, cross-device identity, or authorization boundary. This is a UI flow only; it does not protect content at a server boundary. Replace this adapter with a real identity provider before using the app for private data.
+Starts the Next.js development server.
 
-## User flow
-
-1. Open Feed to see the current date and browse available news, movie, and social items. Article cards use the publisher's date and photo when NewsAPI provides them; missing images use a neutral icon instead of invented photography.
-2. Search; Pulse waits 400 ms after the last keystroke before fetching.
-3. Drag a card handle to reorder it, or use its labeled up/down buttons with a keyboard.
-4. Save items with the heart control and find them under Favorites.
-5. Open Trending to see ranked results by source.
-6. Select Read More on a news card to create or use a local profile before continuing to the publisher. In Settings, manage that profile, select categories, choose light/dark appearance, and select English/Spanish.
-7. Hide or restore the desktop sidebar from the header or Settings. Swipe cards right to dismiss and left to reduce matching suggestions. Restore individual choices or reset all of them under Feed controls in Settings.
-8. Keep Feed open to receive periodic SSE refresh signals. Updates are fetched from the configured live APIs.
-
-## Accessibility and design
-
-The interface includes semantic landmarks, skip navigation, visible focus rings, labeled controls, current-page navigation state, status/error announcements, touch-sized controls, keyboard reorder alternatives, responsive navigation, dark theme tokens, and reduced-motion support. Card images are lazy-loaded. Motion is limited to short transitions, card interaction, and drag feedback.
-
-## Verification
-
-```bash
-npm run typecheck
-npm run lint
-npm test -- --runInBand
-npx playwright install chromium   # one-time browser setup
-npm run test:e2e
+``` bash
 npm run build
 ```
 
-Unit and integration tests use Jest and React Testing Library. Playwright runs against a production build on port 3100 and enables generated fixture content only on that isolated server. E2E can use an existing Chromium binary by setting `PW_CHROMIUM_PATH`.
+Creates a production build.
 
-The current sandbox cannot launch Playwright workers and returns `spawn EPERM` before tests start. Re-run `npm run test:e2e` in a standard local terminal or CI runner to complete browser verification.
+``` bash
+npm run start
+```
 
-## Deployment
+Starts the production server after a successful build.
 
-Deploy as a standard Next.js application on a Node-compatible host. Set both live provider keys and the three public site/contact values in the host's environment settings. Keep `USE_SAMPLE_DATA=false`. Build with `npm run build`, then serve with `npm start`. Confirm the privacy and terms pages accurately reflect the deployment and any additional analytics or data collection. The included `npm run launch-check` checks local launch prerequisites; it does not configure DNS, hosting, or external services.
+For testing:
 
-## Known limits
+``` bash
+npm test
+```
 
-- Social posts come from Mastodon.social's public tag timelines. Availability and coverage depend on public posts using the selected category tags; the instance can rate-limit or restrict public access.
-- SSE refreshes the feed periodically but does not create real upstream news pushes.
-- Mock authentication is for demonstrating profile flows only.
-- Spanish is supported for the main navigation, search/feed controls, and key settings labels; legal pages and some feed copy remain English.
-- A public repository URL, deployed live link, and demo video still need to be supplied as submission artifacts.
+Runs the Jest test suite when the corresponding test script is
+configured.
+
+For Playwright, use the project's configured Playwright command from
+`package.json`.
+
+> If a script name differs in the repository's `package.json`, use the
+> repository-defined command rather than adding a new command to this
+> README.
+
+------------------------------------------------------------------------
+
+## 11. Testing
+
+Pulse includes multiple levels of testing.
+
+### Jest
+
+Jest is used for unit-level testing.
+
+### React Testing Library
+
+React Testing Library covers frontend behavior such as:
+
+-   State behavior
+-   Utilities
+-   Cards
+-   Feed flows
+
+### Playwright
+
+Playwright end-to-end coverage has been written for the application.
+
+At the time of this submission, the Playwright suite still needs a
+successful run in a standard environment.
+
+This is documented intentionally rather than claiming that the complete
+end-to-end suite has passed.
+
+------------------------------------------------------------------------
+
+## 12. Error Handling
+
+The application is designed to handle external provider problems
+gracefully.
+
+Instead of filling missing provider data with invented content, Pulse
+reports the provider error.
+
+This is particularly relevant because the dashboard depends on multiple
+external data sources.
+
+------------------------------------------------------------------------
+
+## 13. Security Considerations
+
+The project includes several basic security-oriented decisions:
+
+-   Provider API credentials remain server-side.
+-   External links use safe link settings.
+-   The local profile is clearly treated as demonstration data.
+-   The local profile is not presented as a real authentication or
+    authorization system.
+
+### Limitation
+
+The current local profile should not be considered production
+authentication.
+
+A production application would require a dedicated authentication and
+authorization system.
+
+------------------------------------------------------------------------
+
+## 14. Deployment
+
+The live Pulse application is deployed on Vercel.
+
+**Production URL:**
+
+https://mypulse.vercel.app/
+
+For a Vercel deployment:
+
+1.  Connect the project repository to Vercel.
+2.  Configure the required environment variables in the Vercel project
+    settings.
+3.  Deploy the application.
+4.  Verify that the server-side API integrations work with the
+    configured credentials.
+5.  Open the production URL and verify the main feed, search,
+    preferences, favorites, and responsive layouts.
+
+------------------------------------------------------------------------
+
+## 15. Project Structure
+
+The exact folder structure may evolve during development, but the
+application follows the following conceptual separation:
+
+``` text
+Pulse/
+├── app/
+│   ├── pages / routes
+│   └── server-side integrations
+│
+├── components/
+│   ├── Feed
+│   ├── Cards
+│   ├── Navigation
+│   ├── Search
+│   └── Settings
+│
+├── store/
+│   ├── Redux store
+│   └── Redux slices / async logic
+│
+├── adapters/
+│   ├── News provider
+│   ├── TMDB
+│   └── Mastodon
+│
+├── tests/
+│   ├── Jest
+│   ├── React Testing Library
+│   └── Playwright
+│
+├── public/
+│
+├── package.json
+└── README.md
+```
+
+> The structure above describes the application's architectural
+> organization. Use the actual repository tree as the source of truth if
+> a reviewer needs exact filenames.
+
+------------------------------------------------------------------------
+
+## 16. What I Focused On
+
+The implementation was designed around four main goals:
+
+### 1. User Experience
+
+The dashboard should make it easy to:
+
+-   Discover content
+-   Search
+-   Save content
+-   Customize preferences
+-   Navigate between different content types
+
+### 2. Reusable Frontend Architecture
+
+React and Next.js are used to structure the application into reusable UI
+and route-level responsibilities.
+
+### 3. Reliable Data Handling
+
+External provider requests are handled through server-side integrations,
+with request guards and provider failure handling.
+
+### 4. Real User Interaction
+
+The application goes beyond displaying API results by allowing users to:
+
+-   Personalize categories
+-   Favorite content
+-   Reorder content
+-   Dismiss content
+-   Ask for fewer similar items
+-   Change theme and language
+-   Discover trending content
+
+------------------------------------------------------------------------
+
+## 17. Known Limitations
+
+The following limitations are intentionally documented:
+
+1.  The local profile is for demonstration and is not real
+    authentication.
+2.  Provider availability depends on the external APIs/services.
+3.  Playwright end-to-end coverage is written but still needs a
+    successful run in a standard environment.
+4.  Browser storage is local to the user's browser and is not a
+    server-side user database.
+5.  Exact setup commands should always match the scripts currently
+    defined in `package.json`.
+
+------------------------------------------------------------------------
+
+## 18. Future Improvements
+
+If the project were extended beyond the assignment, possible
+improvements would include:
+
+-   Real user authentication
+-   Server-side user profiles
+-   Cloud persistence for preferences and favorites
+-   More content providers
+-   More advanced recommendation logic
+-   More comprehensive end-to-end testing
+-   Better analytics around user interactions
+-   Production-grade monitoring and error reporting
+
+------------------------------------------------------------------------
+
+## 19. Demo Flow
+
+For the five-minute project demonstration, the recommended order is:
+
+1.  **Main Feed** --- show news, movies, and social posts.
+2.  **Content Interaction** --- favorite and reorder content.
+3.  **Settings** --- demonstrate categories, theme, language, and feed
+    controls.
+4.  **Search** --- search across content.
+5.  **Trending** --- show ranked discovery.
+6.  **Favorites** --- show saved content.
+7.  **Load More** --- demonstrate additional content loading.
+8.  **Responsive Layout** --- show desktop and smaller-screen
+    navigation.
+9.  **Implementation** --- briefly explain React, Next.js, TypeScript,
+    Redux Toolkit, thunks, server routes, and API adapters.
+10. **Persistence and Security** --- explain browser storage and
+    server-side credentials.
+11. **Testing** --- show the test summary and README commands.
+
+------------------------------------------------------------------------
+
+## 20. Conclusion
+
+Pulse was built as a practical example of a modern personalized frontend
+application.
+
+It combines multiple external content sources with a responsive
+React/Next.js interface, centralized Redux state management, user
+personalization, search and discovery, favorites, feed feedback, local
+persistence, animations, server-side API handling, and automated
+testing.
+
+The project demonstrates not only how to consume APIs and display data,
+but also how to structure an interactive frontend application around a
+real user flow.
+
+------------------------------------------------------------------------
+
+## License
+
+This project was created as part of a software development
+assignment/demo submission.
